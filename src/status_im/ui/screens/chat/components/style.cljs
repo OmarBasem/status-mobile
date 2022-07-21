@@ -88,9 +88,9 @@
   {:flex-direction             :row})
 
 (defn reply-content []
-  {:padding-vertical   6
-   :padding-horizontal 10
-   :flex               1})
+  {:padding-horizontal 10
+   :flex               1
+   :flex-direction     :row})
 
 (defn contact-request-content []
   {:flex               1

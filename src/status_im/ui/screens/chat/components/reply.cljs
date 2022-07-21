@@ -9,9 +9,12 @@
             [status-im.ethereum.stateofus :as stateofus]
             [status-im.ui.screens.chat.components.style :as styles]
             [re-frame.core :as re-frame]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [quo2.foundations.colors :as quo2.colors]
+            [quo2.components.button :as quo2.button]
+            [status-im.ui.screens.chat.photos :as photos]))
 
-(def ^:private reply-symbol "↪ ")
+;; (def ^:private reply-symbol "↪ ")
 
 (defn input-focus [text-input-ref]
   (some-> ^js (quo.react/current-ref text-input-ref) .focus))
@@ -23,12 +26,12 @@
                  (or (stateofus/username contact-name)
                      (subs contact-name 0 81))
                  contact-name)]
-    (i18n/label :replying-to {:author author})))
+    author))
 
 (defn format-reply-author [from username current-public-key]
   (or (and (= from current-public-key)
-           (str reply-symbol (i18n/label :t/You)))
-      (str reply-symbol (format-author username))))
+           (i18n/label :t/You))
+      (format-author username)))
 
 (defn get-quoted-text-with-mentions [parsed-text]
   (string/join
@@ -47,20 +50,29 @@
              literal))
          parsed-text)))
 
-(defn reply-message [{:keys [from]}]
+(defn reply-message [{:keys [from identicon]}]
   (let [contact-name       @(re-frame/subscribe [:contacts/contact-name-by-identity from])
         current-public-key @(re-frame/subscribe [:multiaccount/public-key])]
     [rn/view {:style {:flex-direction :row}}
      [rn/view {:style (styles/reply-content)}
-      [quo/text {:weight          :medium
-                 :number-of-lines 1
-                 :style           {:line-height 18}}
-       (format-reply-author from contact-name current-public-key)]]
+      [icons/icon :main-icons/connector {:color (quo2.colors/theme-colors quo2.colors/neutral-40 quo2.colors/neutral-60)
+                                         :container-style {:position :absolute :left 10 :bottom -3 :width 16 :height 16}}]
+      [rn/view {:style {:position :absolute :left 34 :top 3 :flex-direction :row :align-items :center}}
+       [photos/member-photo from identicon 16]
+       [quo/text {:weight          :medium
+                  :size            :small
+                  :number-of-lines 1
+                  :style           {:line-height 18.2 :margin-left 4}}
+        (format-reply-author from contact-name current-public-key)]]]
      [rn/view
-      [pressable/pressable {:on-press            #(re-frame/dispatch [:chat.ui/cancel-message-reply])
-                            :accessibility-label :cancel-message-reply}
-       [icons/icon :main-icons/close-circle {:container-style (styles/close-button)
-                                             :color (:icon-02 @quo.colors/theme)}]]]]))
+      [quo2.button/button {:width               24
+                           :size 24
+                           :type                :outline
+                           :accessibility-label :reply-cancel-button
+                           :on-press            #(re-frame/dispatch [:chat.ui/cancel-message-reply])}
+       [icons/icon :main-icons/close {:width 16
+                                      :height 16
+                                      :color (quo2.colors/theme-colors quo2.colors/black quo2.colors/neutral-40)}]]]]))
 
 (defn send-image [images]
   [rn/view {:style (styles/reply-container-image)}
