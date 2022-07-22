@@ -50,20 +50,25 @@
              literal))
          parsed-text)))
 
-(defn reply-message [{:keys [from identicon]}]
+(defn reply-message [{:keys [from identicon content]}]
   (let [contact-name       @(re-frame/subscribe [:contacts/contact-name-by-identity from])
         current-public-key @(re-frame/subscribe [:multiaccount/public-key])]
     [rn/view {:style {:flex-direction :row}}
      [rn/view {:style (styles/reply-content)}
       [icons/icon :main-icons/connector {:color (quo2.colors/theme-colors quo2.colors/neutral-40 quo2.colors/neutral-60)
                                          :container-style {:position :absolute :left 10 :bottom -3 :width 16 :height 16}}]
-      [rn/view {:style {:position :absolute :left 34 :top 3 :flex-direction :row :align-items :center}}
+      [rn/view {:style {:position :absolute :left 34 :right 54 :top 3 :flex-direction :row :align-items :center}}
        [photos/member-photo from identicon 16]
        [quo/text {:weight          :medium
                   :size            :small
                   :number-of-lines 1
                   :style           {:line-height 18.2 :margin-left 4}}
-        (format-reply-author from contact-name current-public-key)]]]
+        (format-reply-author from contact-name current-public-key)]
+       [quo/text {:number-of-lines 1
+                  :size            :x-small
+                  :weight          :regular
+                  :style           {:line-height 16 :ellipsize-mode :tail :margin-left 4}}
+        (get-quoted-text-with-mentions (:parsed-text content))]]]
      [rn/view
       [quo2.button/button {:width               24
                            :size 24
